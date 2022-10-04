@@ -1,0 +1,333 @@
+[.text-justify]
+= Conditional // Fluent `if-else` Replacement
+:reproducible:
+:doctype: article
+:author: Herman Ciechanowiec
+:email: herman@ciechanowiec.eu
+:chapter-signifier:
+:sectnums:
+:sectnumlevels: 5
+:sectanchors:
+:toc: left
+:toclevels: 5
+:icons: font
+
+== Overview
+_Conditional_ is a Java utility-library that replaces `if-else` statements and ternary operators with a featured fluent interface. Significantly, this is achieved without use of any `if-else` statement or ternary operator. The library is extremely lightweight (~20 KB), doesn't have any dependencies and is published in Maven Central Repository.
+
+== Quick Start
+=== Basic Concepts
+[upperalpha]
+. The core class of the library is `eu.ciechanowiec.conditional.Conditional`. It can be instantiated via a static `conditional(boolean describedValue)` method. That method accepts a boolean argument (`true`/`false`), which becomes an immutable value described by a constructed `Conditional`. Described value determines behavior of a given instance of `Conditional`.
+. To a given instance of `Conditional` multiple actions can be submitted in a fluent manner.
+. Every submitted action is bound either to a `true` or `false` boolean value.
+. Submitted actions are supposed to be executed in a void manner _or_ to be executed and return a value in the result that execution. To achieve that, usage of `Conditional` is finalized via an `execute()` or `get(Class<T> typeToGet)` method respectively, that triggers actions bound to a value described by a given instance of `Conditional`.
+. `Conditional` is lazy, which means that respective submitted actions will be triggered when and only when an `execute()` or `get(Class<T> typeToGet)` method is called, hence mere submission of an action doesn't suffice to trigger those actions.
+
+=== Maven Dependency
+To use _Conditional_ library, the following Maven dependency can be added to a project:
+
+[source, xml]
+----
+<dependency>
+  <groupId>eu.ciechanowiec</groupId>
+  <artifactId>conditional</artifactId>
+  <version>1.0.0</version>
+</dependency>
+----
+
+=== Usage Example with Void Action
+.With `Conditional`:
+[source, java]
+----
+import static eu.ciechanowiec.conditional.Conditional.conditional;
+
+public static void main(String[] args) {
+    conditional(10 % 2 == 0) <1>
+            .onTrue(() -> System.out.println("Checked number is even")) <2>
+            .onFalse(() -> System.out.println("Checked number is odd")) <3>
+            .execute(); <4>
+}
+----
+----
+Checked number is even
+----
+<1> Constructs an instance of `Conditional` that in this case describes a `true` boolean value.
+<2> Submits a void action to this `Conditional` and bounds it to a `true` value.
+<3> Submits a void action to this `Conditional` and bounds it to a `false` value.
+<4> Executes all submitted actions, bound to the value described by this `Conditional`, i.e. bound to a `true` value in this case.
+
+.Analogue with `if-else`:
+[source, java]
+----
+public static void main(String[] args) {
+    if (10 % 2 == 0) {
+        System.out.println("Checked number is even");
+    } else {
+        System.out.println("Checked number is odd");
+    }
+}
+----
+
+=== Usage Example with Action Returning Value
+.With `Conditional`:
+[source, java]
+----
+import static eu.ciechanowiec.conditional.Conditional.conditional;
+
+public static void main(String[] args) {
+    String evenOrOdd = evenOrOdd(10);
+    System.out.println("Result: " + evenOrOdd);
+}
+
+private static String evenOrOdd(int numToCheck) {
+    return conditional(numToCheck % 2 == 0) <1>
+                      .onTrue(() -> {
+                          System.out.println("Returning a value on true...");
+                          return "Even!";
+                      }) <2>
+                      .onFalse(() -> "Odd!") <3>
+                      .get(String.class); <4>
+}
+----
+----
+Returning a value on true...
+Result: Even!
+----
+<1> Constructs an instance of `Conditional` that in this case describes a `true` boolean value.
+<2> Submits an action to this `Conditional` and bounds it to a `true` value. The action prints `Returning a value on true...` and returns `Even!` when triggered.
+<3> Submits an action to this `Conditional` and bounds it to a `false` value. The action returns `Odd!` when triggered.
+<4> Executes a respective action submitted to this `Conditional` and bound to the  value described by this `Conditional`, i.e. bound to a `true` value in this case. After that, returns a return value that is produced in the result of execution of the action, but cast into a specified type (into `String` in this case).
+
+.Analogue with `if-else`:
+[source, java]
+----
+public static void main(String[] args) {
+    String evenOrOdd = evenOrOdd(10);
+    System.out.println("Result: " + evenOrOdd);
+}
+
+private static String evenOrOdd(int numToCheck) {
+    if (numToCheck % 2 == 0) {
+        System.out.println("Returning a value on true...");
+        return "Even!";
+    } else {
+        return "Odd!";
+    }
+}
+----
+
+=== The Idea behind _Conditional_
+The idea behind _Conditional_ library is to enhance object-oriented style of Java code and to make it less similar to C code.
+
+For instance, here are two snippets how iteration is usually performed in Java and C. As can be seen in those examples, style difference between those snippets is marginal.
+
+.Common iteration in C:
+[source, c]
+----
+#include <stdio.h>
+int main() {
+    for (int i = 0; i < 5; ++i)
+    {
+        if (i % 2 == 0)
+        {
+            printf("Number %d is even\n", i);
+        }
+        else
+        {
+            printf("Number %d is odd\n", i);
+        }
+    }
+    return 0;
+}
+----
+
+.Common iteration in Java:
+[source, java]
+----
+public static void main(String[] args) {
+    for (int i = 0; i < 5; i++) {
+        if (i % 2 == 0) {
+            System.out.printf("Number %d is even\n", i);
+        } else {
+            System.out.printf("Number %d is odd\n", i);
+        }
+    }
+}
+----
+
+_Conditional_ library, in turn, forces to resign from C-style code in many aspects and pushes via various means towards more object-oriented style. For example, _Conditional_ library doesn't allow to pass non-final either non-effectively final variables as function arguments, which makes it impossible to iterate in a way like in the snippets above. As a result, with _Conditional_ library those snippets will have to be rewritten in the manner presented below.
+
+.Iteration with Conditional in Java:
+[source, java]
+----
+public static void main(String[] args) {
+    IntStream.range(0, 5)
+             .forEach(index ->
+                      conditional(index % 2 == 0)
+                            .onTrue(() -> System.out.printf("Number %d is even\n", index))
+                            .onFalse(() -> System.out.printf("Number %d is odd\n", index))
+                            .execute());
+}
+----
+
+== Further Usage Examples
+[upperalpha]
+. Actions are executed in the order they were submitted:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(true)
+            .onTrue(() -> System.out.println("First action executed"))
+            .onTrue(() -> System.out.println("Second action executed"))
+            .execute();
+}
+----
++
+----
+First action executed
+Second action executed
+----
+
+. Bounding actions to `true` and `false` values can be intertwined:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(true)
+            .onTrue(() -> System.out.println("First action from TRUE"))
+            .onFalse(() -> System.out.println("First action from FALSE"))
+            .onTrue(() -> System.out.println("Second action from TRUE"))
+            .execute();
+}
+----
++
+----
+First action from TRUE
+Second action from TRUE
+----
+
+. Instances of `Conditional` can be reused:
++
+[source, java]
+----
+public static void main(String[] args) {
+    Conditional reusableConditional = conditional(true)
+                                        .onTrue(() -> System.out.println("Hello, Universe!"));
+    reusableConditional.execute();
+    reusableConditional.onTrue(() -> System.out.println("How are you?"));
+    reusableConditional.execute();
+}
+----
++
+----
+Hello, Universe!
+Hello, Universe!
+How are you?
+----
+
+. One can command to throw an exception if a given instance of `Conditional` describes a certain value:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(9 % 2 == 0)
+            .onTrue(() -> System.out.println("The number is even"))
+            .onFalseThrow(new RuntimeException("Number must be even!"))
+            .execute();
+}
+----
++
+----
+// throws exception
+----
++
+Similar effect can be achieved via a slightly different API:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(9 % 2 == 0)
+            .onTrue(() -> System.out.println("The number is even"))
+            .onFalse(() -> {
+                System.out.println("I'm going to throw an exception now");
+                throw new RuntimeException("Number must be even!");
+            })
+            .execute();
+}
+----
++
+----
+I'm going to throw an exception now
+// throws exception
+----
+
+. Actions can be described in multi-line manner:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(true)
+            .onTrue(() -> {
+                System.out.println("First line from true");
+                System.out.println("Second line from true");
+            })
+            .execute();
+}
+----
++
+----
+First line from true
+Second line from true
+----
+
+. Execution can be performed a specified amount of cycles:
++
+[source, java]
+----
+public static void main(String[] args) {
+    conditional(true)
+            .onTrue(() -> System.out.println("Hello, Universe!"))
+            .onTrue(() -> System.out.println("How are you?"))
+            .execute(2); // pass number of cycles to execute
+}
+----
++
+----
+Hello, Universe!
+How are you?
+Hello, Universe!
+How are you?
+----
+
+. There are 4 static one-liners that can be used to assure that a given condition has been met and throw an exception otherwise. For instance, one can ensure that a given condition is of `true` value and command to throw a `RuntimeException` if it's not the case:
++
+[source, java]
+----
+public static void main(String[] args) {
+    Conditional.isTrueOrThrow(10 % 2 == 0, <1>
+                              new RuntimeException("The number must be even")); <2>
+}
+----
+<1> Condition that is expected to be `true`. If that's the case, nothing happens.
+<2> The exception that will be thrown if the specified condition hasn't been met.
++
+----
+// nothing happens
+----
+
+== API Documentation
+Full API documentation of _Conditional_ library can be found at this link: https://www.ciechanowiec.eu/conditional. The most important part is the description of API of `Conditional` class itself: https://www.ciechanowiec.eu/conditional/eu/ciechanowiec/conditional/Conditional.html.
+
+== OSGi
+_Conditional_ library is built as an OSGi bundle, therefore it can be used in OSGi environment. Among others, it can be used within Adobe Experience Manager (AEM).
+
+== License
+The program is subject to MIT No Attribution License
+
+Copyright © 2022 Herman Ciechanowiec
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
+
+The Software is provided 'as is', without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the Software or the use or other dealings in the Software.
