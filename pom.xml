@@ -6,7 +6,7 @@
 
   <groupId>eu.ciechanowiec</groupId>
   <artifactId>conditional</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
 
   <name>Conditional</name>
@@ -455,7 +455,7 @@
           <bottom>
             <![CDATA[
             <p>
-            &nbsp&nbsp <i>${project.name}</i>
+            &nbsp&nbsp <i>${project.name},</i> v${project.version}
             </p>
             <p>
             &nbsp&nbsp Copyright © ${project.inceptionYear} ${project.developer.name}
