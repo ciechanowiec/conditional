@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -28,6 +29,9 @@ class ActionTest {
     @Mock
     private Callable<?> callableMock;
 
+    @Spy
+    private ActiveCheckedThrower thrower;
+
     @ParameterizedTest
     @ValueSource(ints = {1, 3})
     void mustExecuteWithRunnableAndCallable(int timesToExecute) {
@@ -42,34 +46,36 @@ class ActionTest {
                 () -> verify(runnableMock, times(timesToExecute)).run(),
                 () -> verify(callableMock, times(timesToExecute)).call()
         );
-
     }
 
     @Test
     void mustThrowWrapperExceptionWhenExecuteWithRunnableAndCallable() {
-        Runnable runnable = () -> {
-            throw new RuntimeException(EXCEPTION_TEST_MESSAGE);
-        };
-        Callable<?> callable = () -> {
+        Runnable runnableOne = () -> {
             throw new Exception(EXCEPTION_TEST_MESSAGE);
         };
-        Action<?> actionWithRunnable = new Action<>(runnable);
-        Action<?> actionWithCallable = new Action<>(callable);
+        Runnable runnableTwo = () -> thrower.throwCheckedIfActive(new Exception(EXCEPTION_TEST_MESSAGE));
+        Callable<?> callableOne = () -> {
+            throw new Exception(EXCEPTION_TEST_MESSAGE);
+        };
+        Action<?> actionWithRunnableOne = new Action<>(runnableOne);
+        Action<?> actionWithRunnableTwo = new Action<>(runnableTwo);
+        Action<?> actionWithCallable = new Action<>(callableOne);
         assertAll(
-            () -> assertThrows(WrapperException.class, actionWithRunnable::execute),
+            () -> assertThrows(WrapperException.class, actionWithRunnableOne::execute),
+            () -> assertThrows(WrapperException.class, actionWithRunnableTwo::execute),
             () -> assertThrows(WrapperException.class, actionWithCallable::execute)
         );
     }
 
     @Test
     void mustNestExceptionWhenExecuteWithRunnableAndCallable() {
-        RuntimeException nestedUncheckedException = new RuntimeException(EXCEPTION_TEST_MESSAGE);
-        Exception nestedCheckedException = new Exception(EXCEPTION_TEST_MESSAGE);
+        Exception nestedExceptionForRunnable = new Exception(EXCEPTION_TEST_MESSAGE);
+        Exception nestedExceptionForCallable = new Exception(EXCEPTION_TEST_MESSAGE);
         Runnable runnable = () -> {
-            throw nestedUncheckedException;
+            throw nestedExceptionForRunnable;
         };
         Callable<?> callable = () -> {
-            throw nestedCheckedException;
+            throw nestedExceptionForCallable;
         };
         Action<?> actionWithRunnable = new Action<>(runnable);
         Action<?> actionWithCallable = new Action<>(callable);
@@ -78,14 +84,14 @@ class ActionTest {
             actionWithRunnable.execute();
         } catch (WrapperException exception) {
             Throwable causeException = exception.getCause();
-            assertEquals(nestedUncheckedException, causeException);
+            assertEquals(nestedExceptionForRunnable, causeException);
         }
 
         try {
             actionWithCallable.execute();
         } catch (WrapperException exception) {
             Throwable causeException = exception.getCause();
-            assertEquals(nestedCheckedException, causeException);
+            assertEquals(nestedExceptionForCallable, causeException);
         }
     }
 
@@ -129,16 +135,19 @@ class ActionTest {
 
     @Test
     void mustThrowWrapperExceptionWhenGetWithRunnableAndCallable() {
-        Runnable runnable = () -> {
-            throw new RuntimeException(EXCEPTION_TEST_MESSAGE);
+        Runnable runnableOne = () -> {
+            throw new Exception(EXCEPTION_TEST_MESSAGE);
         };
+        Runnable runnableTwo = () -> thrower.throwCheckedIfActive(new Exception(EXCEPTION_TEST_MESSAGE));
         Callable<?> callable = () -> {
             throw new Exception(EXCEPTION_TEST_MESSAGE);
         };
-        Action<?> actionWithRunnable = new Action<>(runnable);
+        Action<?> actionWithRunnableOne = new Action<>(runnableOne);
+        Action<?> actionWithRunnableTwo = new Action<>(runnableTwo);
         Action<?> actionWithCallable = new Action<>(callable);
         assertAll(
-                () -> assertThrows(WrapperException.class, () -> actionWithRunnable.get(String.class)),
+                () -> assertThrows(WrapperException.class, () -> actionWithRunnableOne.get(String.class)),
+                () -> assertThrows(WrapperException.class, () -> actionWithRunnableTwo.get(String.class)),
                 () -> assertThrows(WrapperException.class, () -> actionWithCallable.get(String.class)),
                 () -> assertThrows(WrapperException.class, actionWithCallable::get),
                 () -> assertThrows(WrapperException.class, actionWithCallable::get)
@@ -147,13 +156,13 @@ class ActionTest {
 
     @Test
     void mustNestExceptionWhenGetWithRunnableAndCallable() {
-        RuntimeException nestedUncheckedException = new RuntimeException(EXCEPTION_TEST_MESSAGE);
-        Exception nestedCheckedException = new Exception(EXCEPTION_TEST_MESSAGE);
+        Exception nestedExceptionForRunnable = new Exception(EXCEPTION_TEST_MESSAGE);
+        Exception nestedExceptionForCallable = new Exception(EXCEPTION_TEST_MESSAGE);
         Runnable runnable = () -> {
-            throw nestedUncheckedException;
+            throw nestedExceptionForRunnable;
         };
         Callable<?> callable = () -> {
-            throw nestedCheckedException;
+            throw nestedExceptionForCallable;
         };
         Action<?> actionWithRunnable = new Action<>(runnable);
         Action<?> actionWithCallable = new Action<>(callable);
@@ -162,14 +171,14 @@ class ActionTest {
             actionWithRunnable.get(String.class);
         } catch (WrapperException exception) {
             Throwable causeException = exception.getCause();
-            assertEquals(nestedUncheckedException, causeException);
+            assertEquals(nestedExceptionForRunnable, causeException);
         }
 
         try {
             actionWithCallable.get(String.class);
         } catch (WrapperException exception) {
             Throwable causeException = exception.getCause();
-            assertEquals(nestedCheckedException, causeException);
+            assertEquals(nestedExceptionForCallable, causeException);
         }
     }
 }
