@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static eu.ciechanowiec.conditional.Conditional.conditional;
+import static eu.ciechanowiec.conditional.Variables.EXCEPTION_TEST_MESSAGE;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -549,8 +550,8 @@ class ConditionalTest {
     @ParameterizedTest
     @MethodSource("generateTrueAndFalseConditionals")
     void mustThrowOnTrue(Conditional conditionalTrue, Conditional conditionalFalse) {
-        RuntimeException exceptionForTrue = new RuntimeException();
-        Exception exceptionForFalse = new Exception();
+        ChildRuntimeException exceptionForTrue = new ChildRuntimeException(EXCEPTION_TEST_MESSAGE);
+        ChildException exceptionForFalse = new ChildException(EXCEPTION_TEST_MESSAGE);
         conditionalTrue.onTrueThrow(exceptionForTrue);
         conditionalFalse.onTrueThrow(exceptionForFalse);
 
@@ -567,8 +568,8 @@ class ConditionalTest {
     @ParameterizedTest
     @MethodSource("generateTrueAndFalseConditionals")
     void mustThrowOnFalse(Conditional conditionalTrue, Conditional conditionalFalse) {
-        RuntimeException exceptionForTrue = new RuntimeException();
-        Exception exceptionForFalse = new Exception();
+        ChildRuntimeException exceptionForTrue = new ChildRuntimeException(EXCEPTION_TEST_MESSAGE);
+        ChildException exceptionForFalse = new ChildException(EXCEPTION_TEST_MESSAGE);
         conditionalTrue.onFalseThrow(exceptionForTrue);
         conditionalFalse.onFalseThrow(exceptionForFalse);
 
@@ -721,15 +722,15 @@ class ConditionalTest {
 
     static Stream<Arguments> generateRuntimeException() {
         return Stream.of(
-                arguments(new RuntimeException("Generic exception for tests")),
-                arguments(new ChildRuntimeException("Generic child exception for tests"))
+                arguments(new RuntimeException(EXCEPTION_TEST_MESSAGE)),
+                arguments(new ChildRuntimeException(EXCEPTION_TEST_MESSAGE))
         );
     }
 
     static Stream<Arguments> generateException() {
         return Stream.of(
-                arguments(new Exception("Generic exception for tests")),
-                arguments(new ChildException("Generic child exception for tests"))
+                arguments(new Exception(EXCEPTION_TEST_MESSAGE)),
+                arguments(new ChildException(EXCEPTION_TEST_MESSAGE))
         );
     }
 

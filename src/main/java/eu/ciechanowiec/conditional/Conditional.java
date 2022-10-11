@@ -267,9 +267,9 @@ public final class Conditional {
      * Executes the specified amount of cycles all submitted actions,
      * bound to the value described by this conditional.
      * <p>
-     * For example, if sequence of relevant actions is {@code A -> B -> C}
+     * For example, if sequence of relevant actions is [{@code A -> B -> C}]
      * and the specified amount of cycles is 2, then those actions will be executed
-     * in the following order: {@code A -> B -> C -> A -> B -> C}.
+     * in the following order: [{@code A -> B -> C -> A -> B -> C}].
      * <p>
      * For details see documentation for {@link Conditional#execute()}.
      *
@@ -385,10 +385,11 @@ public final class Conditional {
      * method, actions execution order remains usual: execution is performed subsequently,
      * starting from the first submitted action, bound to the value described by this conditional.
      * @param exceptionToThrow exception that will be wrapped into an unchecked {@link WrapperException},
-     * which, in turn, will be thrown when a submitted action will be executed
+     * which, in turn, if a submitted action is executed
+     * @param <T> type of the passed exception                         
      * @return this conditional after submitting an action
      */
-    public Conditional onTrueThrow(Exception exceptionToThrow) {
+    public <T extends Exception> Conditional onTrueThrow(T exceptionToThrow) {
         Callable<?> callableWithException = () -> {
             throw exceptionToThrow;
         };
@@ -404,10 +405,11 @@ public final class Conditional {
      * method, actions execution order remains usual: execution is performed subsequently,
      * starting from the first submitted action, bound to the value described by this conditional.
      * @param exceptionToThrow exception that will be wrapped into an unchecked {@link WrapperException},
-     * which, in turn, will be thrown when a submitted action will be executed
+     * which, in turn, if a submitted action is executed
+     * @param <T> type of the passed exception
      * @return this conditional after submitting an action
      */
-    public Conditional onFalseThrow(Exception exceptionToThrow) {
+    public <T extends Exception> Conditional onFalseThrow(T exceptionToThrow) {
         Callable<?> callableWithException = () -> {
             throw exceptionToThrow;
         };
@@ -421,9 +423,11 @@ public final class Conditional {
      * Does nothing if the passed boolean value is {@code true}.
      * @param conditionThatMustBeTrue boolean value that is supposed to be {@code true} 
      * @param exceptionToThrow if the passed boolean value is {@code false}
-     * @throws RuntimeException if the passed boolean value is {@code false}
+     * @param <T> type of the passed exception
+     * @throws T if the passed boolean value is {@code false}
      */
-    public static void isTrueOrThrow(boolean conditionThatMustBeTrue, RuntimeException exceptionToThrow) {
+    public static <T extends RuntimeException>
+    void isTrueOrThrow(boolean conditionThatMustBeTrue, T exceptionToThrow) throws T {
         Conditional conditional = conditional(!conditionThatMustBeTrue);
         ExceptionThrower exceptionThrower = conditional.uncheckedThrower();
         exceptionThrower.throwUncheckedIfActive(exceptionToThrow);
@@ -436,9 +440,11 @@ public final class Conditional {
      * Does nothing if the passed boolean value is {@code true}.
      * @param conditionThatMustBeTrue boolean value that is supposed to be {@code true}
      * @param exceptionToThrow if the passed boolean value is {@code false}
-     * @throws Exception if the passed boolean value is {@code false}
+     * @param <T> type of the passed exception
+     * @throws T if the passed boolean value is {@code false}
      */
-    public static void isTrueOrThrow(boolean conditionThatMustBeTrue, Exception exceptionToThrow) throws Exception {
+    public static <T extends Exception> 
+    void isTrueOrThrow(boolean conditionThatMustBeTrue, T exceptionToThrow) throws T {
         Conditional conditional = conditional(!conditionThatMustBeTrue);
         ExceptionThrower exceptionThrower = conditional.checkedThrower();
         exceptionThrower.throwCheckedIfActive(exceptionToThrow);
@@ -451,9 +457,11 @@ public final class Conditional {
      * Does nothing if the passed boolean value is {@code false}.
      * @param conditionThatMustBeFalse boolean value that is supposed to be {@code false}
      * @param exceptionToThrow if the passed boolean value is {@code true}
-     * @throws RuntimeException if the passed boolean value is {@code true}
+     * @param <T> type of the passed exception                        
+     * @throws T if the passed boolean value is {@code true}
      */
-    public static void isFalseOrThrow(boolean conditionThatMustBeFalse, RuntimeException exceptionToThrow) {
+    public static <T extends RuntimeException> 
+    void isFalseOrThrow(boolean conditionThatMustBeFalse, T exceptionToThrow) throws T {
         Conditional conditional = conditional(conditionThatMustBeFalse);
         ExceptionThrower exceptionThrower = conditional.uncheckedThrower();
         exceptionThrower.throwUncheckedIfActive(exceptionToThrow);
@@ -466,9 +474,11 @@ public final class Conditional {
      * Does nothing if the passed boolean value is {@code false}.
      * @param conditionThatMustBeFalse boolean value that is supposed to be {@code false}
      * @param exceptionToThrow if the passed boolean value is {@code true}
-     * @throws Exception if the passed boolean value is {@code true}
+     * @param <T> type of the passed exception                        
+     * @throws T if the passed boolean value is {@code true}
      */
-    public static void isFalseOrThrow(boolean conditionThatMustBeFalse, Exception exceptionToThrow) throws Exception {
+    public static <T extends Exception>
+    void isFalseOrThrow(boolean conditionThatMustBeFalse, T exceptionToThrow) throws T {
         Conditional conditional = conditional(conditionThatMustBeFalse);
         ExceptionThrower exceptionThrower = conditional.checkedThrower();
         exceptionThrower.throwCheckedIfActive(exceptionToThrow);

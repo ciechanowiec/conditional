@@ -17,7 +17,7 @@ class ActiveUncheckedThrower implements ExceptionThrower {
      * {@inheritDoc}
      */
     @Override
-    public void throwUncheckedIfActive(RuntimeException exceptionToThrowOrSwallow) {
+    public <T extends RuntimeException> void throwUncheckedIfActive(T exceptionToThrowOrSwallow) throws T {
         throw exceptionToThrowOrSwallow;
     }
 }
