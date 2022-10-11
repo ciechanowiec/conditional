@@ -17,7 +17,7 @@ class ActiveCheckedThrower implements ExceptionThrower {
      * {@inheritDoc}
      */
     @Override
-    public void throwCheckedIfActive(Exception exceptionToThrowOrSwallow) throws Exception {
+    public <T extends Exception> void throwCheckedIfActive(T exceptionToThrowOrSwallow) throws T {
         throw exceptionToThrowOrSwallow;
     }
 }
