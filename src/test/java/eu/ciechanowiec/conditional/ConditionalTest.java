@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static eu.ciechanowiec.conditional.Conditional.conditional;
+import static eu.ciechanowiec.conditional.Conditional.*;
 import static eu.ciechanowiec.conditional.Variables.EXCEPTION_TEST_MESSAGE;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -26,9 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings({"ChainedMethodCall", "ClassWithTooManyMethods"})
 @Slf4j
-@ExtendWith(MockitoExtension.class)
+@SuppressWarnings({"ChainedMethodCall", "ClassWithTooManyMethods"})
 class ConditionalTest {
 
 //  <!-- ====================================================================== -->
@@ -334,7 +333,6 @@ class ConditionalTest {
     @ParameterizedTest
     @MethodSource("generateTrueAndFalseConditionals")
     void mustExecuteAndThrow(Conditional conditionalTrue, Conditional conditionalFalse) {
-        // given
         RuntimeException exceptionForTrue = new RuntimeException();
         Exception exceptionForFalse = new Exception();
         conditionalTrue.onTrue(() -> {
@@ -352,6 +350,41 @@ class ConditionalTest {
             assertEquals(causeException, exceptionForTrue);
         }
         assertDoesNotThrow(() -> conditionalFalse.execute());
+    }
+
+    @Test
+    void mustExecuteOnStatic() throws Exception {
+        Runnable actionForTrue = spy(Runnable.class);
+        Runnable actionForFalse = spy(Runnable.class);
+        onTrueExecute(FALSE, actionForTrue);
+        verify(actionForTrue, never()).run();
+        onTrueExecute(TRUE, actionForTrue);
+        verify(actionForTrue, times(NumberUtils.INTEGER_ONE)).run();
+        onFalseExecute(TRUE, actionForFalse);
+        verify(actionForFalse, never()).run();
+        onFalseExecute(FALSE, actionForFalse);
+        verify(actionForFalse, times(NumberUtils.INTEGER_ONE)).run();
+    }
+
+    @Test
+    void mustExecuteAndThrowOnStatic() {
+        RuntimeException exception = new RuntimeException();
+        Runnable actionForTrue = () -> {
+            throw exception;
+        };
+
+        Runnable actionForFalse = () -> {
+            throw exception;
+        };
+
+        try {
+            onTrueExecute(TRUE, actionForTrue);
+            fail();
+        } catch (WrapperException wrapperException) {
+            Throwable causeException = wrapperException.getCause();
+            assertEquals(causeException, exception);
+        }
+        assertDoesNotThrow(() -> onFalseExecute(TRUE, actionForFalse));
     }
 
     @Test
