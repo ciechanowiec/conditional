@@ -277,11 +277,43 @@ public final class Conditional {
      *                        if value of the passed argument is 0 or less, then nothing happens: no action
      *                        is executed, no exception is thrown
      * @return this conditional after this method call
+     * @throws WrapperException if an {@link Exception} during execution of an action was thrown;
+     *                          in such case the thrown {@link Exception} is set as a cause of an unchecked {@link WrapperException}
      */
     public Conditional execute(int cyclesToExecute) {
         ActionsList actionsForDescribedValue = actionsMap.get(describedValue);
         IntStream.range(0, cyclesToExecute).forEach(index -> actionsForDescribedValue.executeAll());
         return this;
+    }
+
+    /**
+     * Executes the submitted action if the passed boolean value is {@code true}.
+     * If the passed boolean value is {@code false}, does nothing.
+     * @param conditionThatMustBeTrue condition that must be {@code true} in order for
+     *                                the passed action to be executed
+     * @param actionToExecute action to execute if the passed boolean value is {@code true}
+     * @throws WrapperException if an {@link Exception} during execution of an action was thrown;
+     *                          in such case the thrown {@link Exception} is set as a cause of an unchecked {@link WrapperException}
+     */
+    public static void onTrueExecute(boolean conditionThatMustBeTrue, Runnable actionToExecute) {
+        conditional(conditionThatMustBeTrue)
+                .onTrue(actionToExecute)
+                .execute();
+    }
+
+    /**
+     * Executes the submitted action if the passed boolean value is {@code false}.
+     * If the passed boolean value is {@code true}, does nothing.
+     * @param conditionThatMustBeFalse condition that must be {@code false} in order for
+     *                                the passed action to be executed
+     * @param actionToExecute action to execute if the passed boolean value is {@code false}
+     * @throws WrapperException if an {@link Exception} during execution of an action was thrown;
+     *                          in such case the thrown {@link Exception} is set as a cause of an unchecked {@link WrapperException}
+     */
+    public static void onFalseExecute(boolean conditionThatMustBeFalse, Runnable actionToExecute) {
+        conditional(conditionThatMustBeFalse)
+                .onFalse(actionToExecute)
+                .execute();
     }
 
     /**
