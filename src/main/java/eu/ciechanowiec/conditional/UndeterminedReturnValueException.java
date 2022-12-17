@@ -5,11 +5,11 @@ package eu.ciechanowiec.conditional;
  * was submitted to a given {@link Conditional} and was bound to
  * the value described by that {@link Conditional}.
  */
-class UndeterminedReturnValueException extends RuntimeException {
+public class UndeterminedReturnValueException extends RuntimeException {
 
     /**
      * Constructs an instance of an {@link UndeterminedReturnValueException}.
-     * @param message exception message.
+     * @param message exception message
      */
     UndeterminedReturnValueException(String message) {
         super(message);

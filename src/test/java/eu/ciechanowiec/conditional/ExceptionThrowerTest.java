@@ -10,13 +10,13 @@ class ExceptionThrowerTest {
     void mustThrowCheckedOnlyIfActive() {
         Exception exception = new Exception("Generic exception for tests");
         ChildException childException = new ChildException("Generic child exception for tests");
-        ExceptionThrower activeThrower = new ActiveCheckedThrower();
-        ExceptionThrower voidThrower = new VoidCheckedThrower();
+        ExceptionThrower activeThrower = new ExceptionThrowerActive();
+        ExceptionThrower voidThrower = new ExceptionThrowerVoid();
         assertAll(
-                () -> assertThrows(Exception.class, () -> activeThrower.throwCheckedIfActive(exception)),
-                () -> assertThrows(Exception.class, () -> activeThrower.throwCheckedIfActive(childException)),
-                () -> assertDoesNotThrow(() -> voidThrower.throwCheckedIfActive(exception)),
-                () -> assertDoesNotThrow(() -> voidThrower.throwCheckedIfActive(childException))
+                () -> assertThrows(Exception.class, () -> activeThrower.throwIfActive(exception)),
+                () -> assertThrows(Exception.class, () -> activeThrower.throwIfActive(childException)),
+                () -> assertDoesNotThrow(() -> voidThrower.throwIfActive(exception)),
+                () -> assertDoesNotThrow(() -> voidThrower.throwIfActive(childException))
         );
     }
 
@@ -24,13 +24,13 @@ class ExceptionThrowerTest {
     void mustThrowUncheckedOnlyIfActive() {
         RuntimeException exception = new RuntimeException("Generic exception for tests");
         ChildRuntimeException childException = new ChildRuntimeException("Generic child exception for tests");
-        ExceptionThrower activeThrower = new ActiveUncheckedThrower();
-        ExceptionThrower voidThrower = new VoidUncheckedThrower();
+        ExceptionThrower activeThrower = new ExceptionThrowerActive();
+        ExceptionThrower voidThrower = new ExceptionThrowerVoid();
         assertAll(
-                () -> assertThrows(RuntimeException.class, () -> activeThrower.throwUncheckedIfActive(exception)),
-                () -> assertThrows(RuntimeException.class, () -> activeThrower.throwUncheckedIfActive(childException)),
-                () -> assertDoesNotThrow(() -> voidThrower.throwUncheckedIfActive(exception)),
-                () -> assertDoesNotThrow(() -> voidThrower.throwUncheckedIfActive(childException))
+                () -> assertThrows(RuntimeException.class, () -> activeThrower.throwIfActive(exception)),
+                () -> assertThrows(RuntimeException.class, () -> activeThrower.throwIfActive(childException)),
+                () -> assertDoesNotThrow(() -> voidThrower.throwIfActive(exception)),
+                () -> assertDoesNotThrow(() -> voidThrower.throwIfActive(childException))
         );
     }
 
@@ -38,19 +38,37 @@ class ExceptionThrowerTest {
     void mustThrowUnsupportedOperation() {
         RuntimeException uncheckedException = new RuntimeException("Generic exception for tests");
         Exception checkedException = new Exception("Generic exception for tests");
-        ExceptionThrower activeUncheckedThrower = new ActiveUncheckedThrower();
-        ExceptionThrower voidUncheckedThrower = new VoidUncheckedThrower();
-        ExceptionThrower activeCheckedThrower = new ActiveCheckedThrower();
-        ExceptionThrower voidCheckedThrower = new VoidCheckedThrower();
+        ExceptionThrower activeUncheckedThrower = new ExceptionThrower() {};
+        ExceptionThrower voidUncheckedThrower = new ExceptionThrower() {};
+        ExceptionThrower activeCheckedThrower = new ExceptionThrower() {};
+        ExceptionThrower voidCheckedThrower = new ExceptionThrower() {};
         assertAll(
                 () -> assertThrows(UnsupportedOperationException.class,
-                        () -> activeUncheckedThrower.throwCheckedIfActive(checkedException)),
+                        () -> activeUncheckedThrower.throwIfActive(checkedException)),
                 () -> assertThrows(UnsupportedOperationException.class,
-                        () -> voidUncheckedThrower.throwCheckedIfActive(checkedException)),
+                        () -> voidUncheckedThrower.throwIfActive(checkedException)),
                 () -> assertThrows(UnsupportedOperationException.class,
-                        () -> activeCheckedThrower.throwUncheckedIfActive(uncheckedException)),
+                        () -> activeCheckedThrower.throwIfActive(uncheckedException)),
                 () -> assertThrows(UnsupportedOperationException.class,
-                        () -> voidCheckedThrower.throwUncheckedIfActive(uncheckedException))
+                        () -> voidCheckedThrower.throwIfActive(uncheckedException))
+        );
+    }
+
+    @Test
+    void mustHandleNPEIfPassingNull() {
+        ExceptionThrower activeUncheckedThrower = new ExceptionThrowerActive();
+        ExceptionThrower voidUncheckedThrower = new ExceptionThrowerVoid();
+        ExceptionThrower activeCheckedThrower = new ExceptionThrowerActive();
+        ExceptionThrower voidCheckedThrower = new ExceptionThrowerVoid();
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> activeUncheckedThrower.throwIfActive(null)),
+                () -> assertDoesNotThrow(
+                        () -> voidUncheckedThrower.throwIfActive(null)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> activeCheckedThrower.throwIfActive(null)),
+                () -> assertDoesNotThrow(
+                        () -> voidCheckedThrower.throwIfActive(null))
         );
     }
 }

@@ -30,10 +30,10 @@ class RunnableTest {
 
     @Test
     void mustRunWithThrowing() {
-        ActiveCheckedThrower thrower = new ActiveCheckedThrower();
+        ExceptionThrowerActive thrower = new ExceptionThrowerActive();
         Runnable runnable = () -> {
             list.clear();
-            thrower.throwCheckedIfActive(new Exception());
+            thrower.throwIfActive(new Exception());
         };
         assertAll(
                 () -> verify(list, never()).clear(),

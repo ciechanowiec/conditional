@@ -1,6 +1,8 @@
 package eu.ciechanowiec.conditional;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -22,7 +24,7 @@ public class ActionsList {
      * <p>
      * Actions are stored in an internal {@link List}.
      */
-    public ActionsList() {
+    ActionsList() {
         internalList = new ArrayList<>();
     }
 
@@ -33,7 +35,7 @@ public class ActionsList {
      * @param actionToAdd {@link Action} to add to this actions list
      * @param <T> type of value returned in the result of submitted action execution
      */
-    public <T> void add(Action<T> actionToAdd) {
+    <T> void add(Action<T> actionToAdd) {
         internalList.add(actionToAdd);
     }
 
@@ -43,7 +45,7 @@ public class ActionsList {
      * @throws NoSuchElementException if this actions list is empty
      */
     @SuppressWarnings({"squid:S1452", "squid:S1166"})
-    public Action<?> getFirst() {
+    Action<?> getFirst() {
         try {
             return internalList.get(0);
         } catch (IndexOutOfBoundsException exception) {
@@ -64,19 +66,20 @@ public class ActionsList {
      * <p>
      * The list will be empty after this call returns.
      */
-    public void clear() {
+    void clear() {
         internalList.clear();
     }
 
     /**
      * Retrieves by reference all instances of {@link Action}s stored in this actions list.
-     * @return {@link List} of all instances of {@link Action}s stored in this actions list;
-     * the returned list isn't the same instance of {@link List} used by this actions list internally
-     * to store {@link Action}s
+     * @return unmodifiable {@link List} of all instances of {@link Action}s stored in this actions list;
+     *         the returned list isn't the same instance of {@link List} used
+     *         by this actions list internally to store {@link Action}s
      */
+    @Nonnull
     @SuppressWarnings("squid:S1452")
     public List<Action<?>> getAll() {
-        return new ArrayList<>(internalList);
+        return Collections.unmodifiableList(internalList);
     }
 
     /**
@@ -84,7 +87,7 @@ public class ActionsList {
      * <p>
      * Execution is performed by calling an {@link Action#execute()} method of an executed {@link Action}.
      */
-    public void executeAll() {
+    void executeAll() {
         internalList.forEach(Action::execute);
     }
 }
