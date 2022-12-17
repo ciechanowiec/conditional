@@ -301,7 +301,7 @@ Hello, Universe!
 How are you?
 ----
 
-. There are 4 static one-liners (see `isTrueOrThrow()` and `isFalseOrThrow(...)`) that can be used to assure that a given condition has been met and throw an exception otherwise. For instance, one can ensure that a given condition is of `true` value and command to throw a `RuntimeException` if it's not the case:
+. There are 4 static one-liners (see `isTrueOrThrow(...)` and `isFalseOrThrow(...)`) that can be used to assure that a given condition has been met and throw an exception otherwise. For instance, one can ensure that a given condition is of `true` value and command to throw a `RuntimeException` if it's not the case:
 +
 [source, java]
 ----
@@ -311,7 +311,7 @@ public static void main(String[] args) {
 }
 ----
 <1> Condition that is expected to be `true`. If that's the case, nothing happens.
-<2> The exception that will be thrown if the specified condition hasn't been met.
+<2> The exception that will be thrown if the specified condition isn't met.
 +
 ----
 // nothing happens
