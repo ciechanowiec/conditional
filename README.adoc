@@ -20,9 +20,9 @@ _Conditional_ is a Java utility-library that replaces `if-else` statements and t
 [upperalpha]
 . The core class of the library is `eu.ciechanowiec.conditional.Conditional`. It can be instantiated via a static `conditional(boolean describedValue)` method. That method accepts a boolean argument (`true`/`false`), which becomes an immutable value described by a constructed `Conditional`. Described value determines behavior of a given instance of `Conditional`.
 . To a given instance of `Conditional` multiple actions can be submitted in a fluent manner.
-. Every submitted action is bound either to a `true` or `false` boolean value.
-. Submitted actions are supposed to be executed in a void manner _or_ to be executed and return a value in the result that execution. To achieve that, usage of `Conditional` is finalized via an `execute()` or `get(Class<T> typeToGet)` method respectively, that triggers actions bound to a value described by a given instance of `Conditional`.
-. `Conditional` is lazy, which means that respective submitted actions will be triggered when and only when an `execute()` or `get(Class<T> typeToGet)` method is called, hence mere submission of an action doesn't suffice to trigger those actions.
+. Every submitted action is bound either to a `true` or `false` boolean value, depending on the used submission method.
+. Submitted actions are supposed to be executed in a void manner _or_ to be executed and return a value in the result of that execution. To achieve that, usage of `Conditional` is finalized via an `execute(...)` or `get(...)` methods respectively, that trigger actions bound to a value described by a given instance of `Conditional`.
+. `Conditional` is lazy, which means that respective submitted actions will be triggered when and only when an `execute(...)` or `get(...)` methods are called, hence mere submission of an action doesn't suffice to trigger that action.
 
 === Maven Dependency
 To use _Conditional_ library, the following Maven dependency can be added to a project:
@@ -32,7 +32,7 @@ To use _Conditional_ library, the following Maven dependency can be added to a p
 <dependency>
   <groupId>eu.ciechanowiec</groupId>
   <artifactId>conditional</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
 </dependency>
 ----
 
@@ -120,7 +120,7 @@ private static String evenOrOdd(int numToCheck) {
 === The Idea behind _Conditional_
 The idea behind _Conditional_ library is to enhance object-oriented style of Java code and to make it less similar to C code.
 
-For instance, here are two snippets how iteration is usually performed in Java and C. As can be seen in those examples, style difference between those snippets is marginal.
+For instance, here are two snippets how iteration is usually performed in C and Java. As can be seen in those examples, style difference between those snippets is marginal.
 
 .Common iteration in C:
 [source, c]
@@ -234,13 +234,13 @@ How are you?
 public static void main(String[] args) {
     conditional(9 % 2 == 0)
             .onTrue(() -> System.out.println("The number is even"))
-            .onFalseThrow(new RuntimeException("Number must be even!"))
+            .onFalseThrow(new RuntimeException("The number must be even!"))
             .execute();
 }
 ----
 +
 ----
-// throws exception
+// throws a `RuntimeException`
 ----
 +
 Similar effect can be achieved via a slightly different API:
@@ -251,16 +251,16 @@ public static void main(String[] args) {
     conditional(9 % 2 == 0)
             .onTrue(() -> System.out.println("The number is even"))
             .onFalse(() -> {
-                System.out.println("I'm going to throw an exception now");
-                throw new RuntimeException("Number must be even!");
+                System.out.println("I'm going to throw an exception now...");
+                throw new RuntimeException("The number must be even!");
             })
             .execute();
 }
 ----
 +
 ----
-I'm going to throw an exception now
-// throws exception
+I'm going to throw an exception now...
+// throws a `RuntimeException`
 ----
 
 . Actions can be described in multi-line manner:
@@ -290,7 +290,7 @@ public static void main(String[] args) {
     conditional(true)
             .onTrue(() -> System.out.println("Hello, Universe!"))
             .onTrue(() -> System.out.println("How are you?"))
-            .execute(2); // pass number of cycles to execute
+            .execute(2); // pass the number of cycles to execute
 }
 ----
 +
@@ -301,13 +301,13 @@ Hello, Universe!
 How are you?
 ----
 
-. There are 4 static one-liners that can be used to assure that a given condition has been met and throw an exception otherwise. For instance, one can ensure that a given condition is of `true` value and command to throw a `RuntimeException` if it's not the case:
+. There are 4 static one-liners (see `isTrueOrThrow()` and `isFalseOrThrow(...)`) that can be used to assure that a given condition has been met and throw an exception otherwise. For instance, one can ensure that a given condition is of `true` value and command to throw a `RuntimeException` if it's not the case:
 +
 [source, java]
 ----
 public static void main(String[] args) {
     Conditional.isTrueOrThrow(10 % 2 == 0, <1>
-                              new RuntimeException("The number must be even")); <2>
+                              new RuntimeException("The number must be even!")); <2>
 }
 ----
 <1> Condition that is expected to be `true`. If that's the case, nothing happens.
@@ -316,6 +316,41 @@ public static void main(String[] args) {
 ----
 // nothing happens
 ----
+
+. Basic execution and get methods of `Conditional`, i.e. `execute()`, `execute(int cyclesToExecute)` and `get(Class<T> typeToGet)`, don't specify any `Exception`++s++ in a method declaration in a `throws...` clause, although those methods are capable of throwing an `Exception` (the clause is omitted via `SneakyThrows` on the underlying action). This allows to avoid enforcing of exception handling when basic execution and get methods of `Conditional` are called.
++
+In cases, where enforcing of exception handling is, however, required, the overloaded `execute(...)` and `get(...)` methods can be used. Those overloaded methods will behave the same way as their basic counterparts, the only difference being that their declarations have exception lists (`throws...` clause). Those lists are dynamically defined by the passed exception classes and can be used as a mean to enforce the discussed exception handling:
++
+[source, java]
+----
+public static void main(String[] args) {
+    Conditional conditional = conditional(true) <1>
+            .onTrue(() -> {
+                throw new IOException();
+            });
+
+    conditional.execute(); <2>
+
+    try {
+        conditional.execute(IOException.class); <3>
+    } catch (IOException exception) {
+        log.error("Unable to read a file", exception);
+    }
+
+    String resultOne = conditional.get(String.class); <4>
+
+    try {
+        String resultTwo = conditional.get(String.class, IOException.class); <5>
+    } catch (IOException exception) {
+        log.error("Unable to read a file", exception);
+    }
+}
+----
+<1> Upon execution, this instance of `Conditional` always throws an `IOException`, which is a subclass of an `Exception`.
+<2> This basic execution method will not enforce exception handling, although it throws an `IOException`, which is a subclass of an `Exception`.
+<3> This overloaded execution method will enforce exception handling. Handling of `IOException` will be enforced in this case, because it was passed as a parameter to the execution method.
+<4> This basic get method will not enforce exception handling, although it throws an `IOException`, which is a subclass of an `Exception`.
+<5> This overloaded get method will enforce exception handling. Handling of `IOException` will be enforced in this case, because it was passed as a parameter to the execution method.
 
 == API Documentation
 Full API documentation of _Conditional_ library can be found at this link: https://www.ciechanowiec.eu/conditional. The most important part is the description of API of `Conditional` class itself: https://www.ciechanowiec.eu/conditional/eu/ciechanowiec/conditional/Conditional.html.
@@ -326,7 +361,7 @@ _Conditional_ library is built as an OSGi bundle, therefore it can be used in OS
 == License
 The program is subject to MIT No Attribution License
 
-Copyright © 2022 Herman Ciechanowiec
+Copyright © 2022-2022 Herman Ciechanowiec
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
 
