@@ -353,7 +353,7 @@ public static void main(String[] args) {
 <5> This overloaded get method will enforce exception handling. Handling of `IOException` will be enforced in this case, because it was passed as a parameter to the execution method.
 
 == API Documentation
-Full API documentation of _Conditional_ library can be found at this link: https://www.ciechanowiec.eu/conditional. The most important part is the description of API of `Conditional` class itself: https://www.ciechanowiec.eu/conditional/eu/ciechanowiec/conditional/Conditional.html.
+Full API documentation of _Conditional_ library can be found at this link: https://www.ciechanowiec.eu/conditional. The most important part is the API description of `Conditional` class itself: https://www.ciechanowiec.eu/conditional/eu/ciechanowiec/conditional/Conditional.html.
 
 == OSGi
 _Conditional_ library is built as an OSGi bundle, therefore it can be used in OSGi environment. Among others, it can be used within Adobe Experience Manager (AEM).

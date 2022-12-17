@@ -15,8 +15,8 @@ public class MismatchedReturnTypeException extends RuntimeException {
     /**
      * Constructs an instance of a {@link MismatchedReturnTypeException}
      * with a template message.
-     * @param actualReturnTypeAsString - actual return type represented as string
-     * @param demandedReturnTypeAsString  - demanded return type represented as string
+     * @param actualReturnTypeAsString - actual return type represented as a string
+     * @param demandedReturnTypeAsString  - demanded return type represented as a string
      */
     MismatchedReturnTypeException(String actualReturnTypeAsString,
                                   String demandedReturnTypeAsString) {

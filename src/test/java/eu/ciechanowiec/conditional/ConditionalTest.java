@@ -1,25 +1,43 @@
 package eu.ciechanowiec.conditional;
 
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.tools.attach.AgentInitializationException;
+import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.management.BadAttributeValueExpException;
+import javax.management.BadBinaryOpValueExpException;
+import javax.swing.text.BadLocationException;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.xml.catalog.CatalogException;
+import java.awt.*;
+import java.io.IOException;
+import java.lang.annotation.AnnotationTypeMismatchException;
 import java.lang.reflect.Field;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.rmi.AlreadyBoundException;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.prefs.BackingStoreException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static eu.ciechanowiec.conditional.Conditional.*;
 import static eu.ciechanowiec.conditional.Variables.EXCEPTION_TEST_MESSAGE;
+import static eu.ciechanowiec.conditional.Variables.HELLO;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +56,7 @@ class ConditionalTest {
     @MethodSource("generateBooleans")
     void mustCreateSpecifiedConditional(boolean expectedValue) {
         Conditional conditional = conditional(expectedValue);
+        assertNotNull(conditional);
         boolean actualValue = conditional.describedValue();
         assertEquals(expectedValue, actualValue);
     }
@@ -71,9 +90,9 @@ class ConditionalTest {
     @Test
     void mustReturnActionsOnTrueAndFalse() {
         Conditional conditional = conditional(TRUE);
-        ActionsList expectedActionsOnTrue = extractActions(conditional, TRUE);
+        ActionsList expectedActionsOnTrue = extractActionsViaReflection(conditional, TRUE);
         ActionsList actualActionsOnTrue = conditional.actionsOnTrue();
-        ActionsList expectedActionsOnFalse = extractActions(conditional, FALSE);
+        ActionsList expectedActionsOnFalse = extractActionsViaReflection(conditional, FALSE);
         ActionsList actualActionsOnFalse = conditional.actionsOnFalse();
         assertAll(
                 () -> assertEquals(expectedActionsOnTrue, actualActionsOnTrue),
@@ -93,13 +112,13 @@ class ConditionalTest {
         List<String> listForTrue = spy(new ArrayList<>());
         Callable<String> callableForTrue = () -> {
             listForTrue.clear();
-            return Variables.HELLO;
+            return HELLO;
         };
 
         List<String> listForFalse = spy(new ArrayList<>());
         Callable<String> callableForFalse = () -> {
             listForFalse.clear();
-            return Variables.HELLO;
+            return HELLO;
         };
 
         // when
@@ -165,17 +184,43 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_TWO)).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_ONE)).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_TWO)).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_ONE)).execute())
+        );
+    }
+
+    @SuppressWarnings({"ConstantValue", "DataFlowIssue"})
+    @Test
+    void mustThrowNPEWhenSubmittingNulls() {
+        Callable<?> callable = null;
+        Runnable runnable = null;
+        Action<?> action = null;
+        Conditional trueWithCallable = conditional(TRUE)
+                .onTrue(callable);
+        Conditional trueWithRunnable = conditional(TRUE)
+                .onTrue(runnable);
+        Conditional trueWithAction = conditional(TRUE)
+                .onTrue(action);
+        Conditional falseWithCallable = conditional(FALSE)
+                .onFalse(callable);
+        Conditional falseWithRunnable = conditional(FALSE)
+                .onFalse(runnable);
+        Conditional falseWithAction = conditional(FALSE)
+                .onFalse(action);
+        assertAll(
+                () -> assertThrows(NullPointerException.class, trueWithCallable::execute),
+                () -> assertThrows(NullPointerException.class, trueWithRunnable::execute),
+                () -> assertThrows(NullPointerException.class, trueWithAction::execute),
+                () -> assertThrows(NullPointerException.class, falseWithCallable::execute),
+                () -> assertThrows(NullPointerException.class, falseWithRunnable::execute),
+                () -> assertThrows(NullPointerException.class, falseWithAction::execute)
         );
     }
 
 //  <!-- ====================================================================== -->
-//  <!--        ACTIONS OPERATIONS                                              -->
+//  <!--        EXECUTION OPERATIONS - USUAL                                    -->
 //  <!-- ====================================================================== -->
 
     @ParameterizedTest
@@ -192,12 +237,10 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_ONE)).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, never()).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_ONE)).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, never()).execute())
         );
     }
 
@@ -215,12 +258,10 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_TWO)).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, never()).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_TWO)).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, never()).execute())
         );
     }
 
@@ -238,31 +279,38 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, never()).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_ONE)).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, never()).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_ONE)).execute())
         );
     }
 
     @Test
     void mustExecuteSubsequently() {
-        List<String> expectedValues = List.of("A", "B", "C");
-        List<String> actualValues = new ArrayList<>();
+        List<String> expectedValuesWithoutCycles = List.of("A", "B", "C");
+        List<String> actualValuesWithoutCycles = new ArrayList<>();
         conditional(TRUE)
-                .onTrue(() -> actualValues.add("A"))
-                .onTrue(() -> actualValues.add("B"))
-                .onTrue(() -> actualValues.add("C"))
+                .onTrue(() -> actualValuesWithoutCycles.add("A"))
+                .onTrue(() -> actualValuesWithoutCycles.add("B"))
+                .onTrue(() -> actualValuesWithoutCycles.add("C"))
                 .execute();
-        assertEquals(actualValues, expectedValues);
+        assertEquals(actualValuesWithoutCycles, expectedValuesWithoutCycles);
+
+        List<String> expectedValuesWithCycles = List.of("A", "B", "C", "A", "B", "C");
+        List<String> actualValuesWithCycles = new ArrayList<>();
+        conditional(FALSE)
+                .onFalse(() -> actualValuesWithCycles.add("A"))
+                .onFalse(() -> actualValuesWithCycles.add("B"))
+                .onFalse(() -> actualValuesWithCycles.add("C"))
+                .execute(2);
+        assertEquals(actualValuesWithCycles, expectedValuesWithCycles);
     }
 
     @ParameterizedTest
     @MethodSource("generateActionsPair")
     void mustExecuteTwoCyclesOnTrue(Iterable<Action<?>> actionsOnTrue,
-                                   Iterable<Action<?>> actionsOnFalse) {
+                                    Iterable<Action<?>> actionsOnFalse) {
         // given
         Conditional conditional = conditional(TRUE);
         actionsOnTrue.forEach(conditional::onTrue);
@@ -273,19 +321,17 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_TWO)).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, never()).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_TWO)).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, never()).execute())
         );
     }
 
     @ParameterizedTest
     @MethodSource("generateActionsPair")
     void mustExecuteTwoCyclesOnFalse(Iterable<Action<?>> actionsOnTrue,
-                                   Iterable<Action<?>> actionsOnFalse) {
+                                     Iterable<Action<?>> actionsOnFalse) {
         // given
         Conditional conditional = conditional(FALSE);
         actionsOnTrue.forEach(conditional::onTrue);
@@ -296,12 +342,10 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, never()).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, times(NumberUtils.INTEGER_TWO)).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, never()).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, times(NumberUtils.INTEGER_TWO)).execute())
         );
     }
 
@@ -321,71 +365,257 @@ class ConditionalTest {
 
         // then
         assertAll(
-                () -> actionsOnTrue.forEach(action -> {
-                    verify(action, never()).execute();
-                }),
-                () -> actionsOnFalse.forEach(action -> {
-                    verify(action, never()).execute();
-                })
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, never()).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, never()).execute())
         );
     }
 
     @ParameterizedTest
     @MethodSource("generateTrueAndFalseConditionals")
-    void mustExecuteAndThrow(Conditional conditionalTrue, Conditional conditionalFalse) {
-        RuntimeException exceptionForTrue = new RuntimeException();
-        Exception exceptionForFalse = new Exception();
+    void mustThrowFromActionOnExecution(Conditional conditionalTrue, Conditional conditionalFalse) {
+        RuntimeException uncheckedException = new RuntimeException();
+        Exception checkedException = new Exception();
         conditionalTrue.onTrue(() -> {
-            throw exceptionForTrue;
+            throw uncheckedException;
         });
-        conditionalFalse.onTrue(() -> {
-            throw exceptionForFalse;
+        conditionalFalse.onFalse(() -> {
+            throw checkedException;
         });
 
         try {
             conditionalTrue.execute();
             fail();
-        } catch (WrapperException exception) {
-            Throwable causeException = exception.getCause();
-            assertEquals(causeException, exceptionForTrue);
+        } catch (RuntimeException actualException) {
+            assertEquals(actualException, uncheckedException);
         }
-        assertDoesNotThrow(() -> conditionalFalse.execute());
+
+        try {
+            conditionalFalse.execute();
+            fail();
+        } catch (@SuppressWarnings("OverlyBroadCatchBlock") Exception actualException) {
+            assertEquals(actualException, checkedException);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTrueAndFalseConditionals")
+    void mustNotThrowFromActionOnExecution(Conditional conditionalTrue, Conditional conditionalFalse) {
+        RuntimeException uncheckedException = new RuntimeException();
+        Exception checkedException = new Exception();
+
+        conditionalTrue.onFalse(() -> {
+            throw uncheckedException;
+        });
+        conditionalFalse.onTrue(() -> {
+            throw checkedException;
+        });
+
+        assertAll(
+                () -> assertDoesNotThrow(() -> conditionalTrue.execute()),
+                () -> assertDoesNotThrow(() -> conditionalFalse.execute())
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateActionsPair")
+    void mustExecuteWithExceptionsViaExecuteWithoutExceptions(
+            Iterable<Action<?>> actionsOnTrue,
+            Iterable<Action<?>> actionsOnFalse
+    ) {
+        // given
+        Conditional conditional = spy(conditional(TRUE));
+        actionsOnTrue.forEach(conditional::onTrue);
+        actionsOnFalse.forEach(conditional::onFalse);
+
+        // when
+        conditional.execute(RuntimeException.class);
+        conditional.execute(RuntimeException.class, RuntimeException.class);
+        conditional.execute(RuntimeException.class, RuntimeException.class, RuntimeException.class);
+        conditional.execute(RuntimeException.class, RuntimeException.class,
+                            RuntimeException.class, RuntimeException.class);
+
+        // then
+        assertAll(
+                () -> verify(conditional, times(4)).execute(),
+                () -> actionsOnTrue.forEach(action ->
+                        verify(action, times(4)).execute()),
+                () -> actionsOnFalse.forEach(action ->
+                        verify(action, never()).execute())
+        );
     }
 
     @Test
+    void mustEnforceHandlingOfPassedCheckedExceptionsWhenExecute() {
+        Conditional conditional = conditional(TRUE)
+                                    .onTrue(() -> System.out.println(HELLO));
+        try {
+            conditional.execute(AbsentInformationException.class);
+            conditional.execute(AgentInitializationException.class, AgentLoadException.class);
+            conditional.execute(AlreadyBoundException.class, AttachNotSupportedException.class, AWTException.class);
+            conditional.execute(BackingStoreException.class, BadAttributeValueExpException.class,
+                                BadBinaryOpValueExpException.class, BadLocationException.class);
+        } catch (AbsentInformationException
+                 | AgentInitializationException | AgentLoadException
+                 | AlreadyBoundException | AttachNotSupportedException | AWTException
+                 | BackingStoreException | BadAttributeValueExpException | BadBinaryOpValueExpException |
+                 BadLocationException exception) {
+            log.error("Exception occurred", exception);
+            fail();
+        }
+    }
+
+    @Test
+    // Only the possibility to compile the statements in the test without handling
+    // the passed exceptions is tested, so the following suppression is valid:
+    @SuppressWarnings("squid:S2699")
+    void mustNotEnforceHandlingOfPassedUncheckedExceptionsAndNullsWhenExecute() {
+        Conditional conditional = conditional(TRUE)
+                                    .onTrue(() -> System.out.println(HELLO));
+        conditional.execute(AnnotationTypeMismatchException.class);
+        conditional.execute(null);
+        conditional.execute(ArithmeticException.class, ArrayStoreException.class);
+        conditional.execute(null, null, null);
+        conditional.execute(BufferOverflowException.class, BufferUnderflowException.class, CannotRedoException.class);
+        conditional.execute(null, null, null);
+        conditional.execute(CannotUndoException.class, CatalogException.class,
+                            ClassCastException.class, ClassNotPreparedException.class);
+        conditional.execute(null, null, null, null);
+    }
+
+//  <!-- ====================================================================== -->
+//  <!--        EXECUTION OPERATIONS - STATIC                                   -->
+//  <!-- ====================================================================== -->
+
+    @Test
+    @SuppressWarnings("OverlyBroadThrowsClause")
     void mustExecuteOnStatic() throws Exception {
         Runnable actionForTrue = spy(Runnable.class);
         Runnable actionForFalse = spy(Runnable.class);
+
         onTrueExecute(FALSE, actionForTrue);
         verify(actionForTrue, never()).run();
         onTrueExecute(TRUE, actionForTrue);
         verify(actionForTrue, times(NumberUtils.INTEGER_ONE)).run();
+        onTrueExecute(FALSE, actionForTrue, RuntimeException.class);
+        verify(actionForTrue, times(NumberUtils.INTEGER_ONE)).run();
+        onTrueExecute(TRUE, actionForTrue, RuntimeException.class);
+        verify(actionForTrue, times(NumberUtils.INTEGER_TWO)).run();
+
         onFalseExecute(TRUE, actionForFalse);
         verify(actionForFalse, never()).run();
         onFalseExecute(FALSE, actionForFalse);
         verify(actionForFalse, times(NumberUtils.INTEGER_ONE)).run();
+        onFalseExecute(TRUE, actionForFalse, RuntimeException.class);
+        verify(actionForFalse, times(NumberUtils.INTEGER_ONE)).run();
+        onFalseExecute(FALSE, actionForFalse, RuntimeException.class);
+        verify(actionForFalse, times(NumberUtils.INTEGER_TWO)).run();
     }
 
     @Test
-    void mustExecuteAndThrowOnStatic() {
-        RuntimeException exception = new RuntimeException();
-        Runnable actionForTrue = () -> {
-            throw exception;
-        };
-
-        Runnable actionForFalse = () -> {
-            throw exception;
-        };
+    void mustThrowFromActionOnStaticExecution() {
+        RuntimeException uncheckedException = new RuntimeException();
+        Exception checkedException = new Exception();
 
         try {
-            onTrueExecute(TRUE, actionForTrue);
+            onTrueExecute(TRUE, () -> {
+                throw uncheckedException;
+            });
             fail();
-        } catch (WrapperException wrapperException) {
-            Throwable causeException = wrapperException.getCause();
-            assertEquals(causeException, exception);
+        } catch (RuntimeException actualException) {
+            assertEquals(actualException, uncheckedException);
         }
-        assertDoesNotThrow(() -> onFalseExecute(TRUE, actionForFalse));
+
+        try {
+            onTrueExecute(TRUE, () -> {
+                throw uncheckedException;
+            }, ArithmeticException.class);
+            fail();
+        } catch (@SuppressWarnings("OverlyBroadCatchBlock") RuntimeException actualException) {
+            assertEquals(actualException, uncheckedException);
+        }
+
+        try {
+            onFalseExecute(FALSE, () -> {
+                throw checkedException;
+            });
+            fail();
+        } catch (@SuppressWarnings("OverlyBroadCatchBlock") Exception actualException) {
+            assertEquals(actualException, checkedException);
+        }
+
+        try {
+            onFalseExecute(FALSE, () -> {
+                throw checkedException;
+            }, IOException.class);
+            fail();
+        } catch (@SuppressWarnings("OverlyBroadCatchBlock") Exception actualException) {
+            assertEquals(actualException, checkedException);
+        }
     }
+
+    @Test
+    void mustNotThrowFromActionOnStaticExecution() {
+        RuntimeException uncheckedException = new RuntimeException();
+        Exception checkedException = new Exception();
+
+        Runnable runnableWithUnchecked = () -> {
+            throw uncheckedException;
+        };
+        Runnable runnableWithChecked = () -> {
+            throw checkedException;
+        };
+
+        assertAll(
+                () -> assertDoesNotThrow(() -> onTrueExecute(FALSE, runnableWithUnchecked)),
+                () -> assertDoesNotThrow(() -> onTrueExecute(FALSE, runnableWithUnchecked, RuntimeException.class)),
+                () -> assertDoesNotThrow(() -> onFalseExecute(TRUE, runnableWithChecked)),
+                () -> assertDoesNotThrow(() -> onFalseExecute(TRUE, runnableWithChecked, RuntimeException.class))
+        );
+    }
+
+    @Test
+    void mustEnforceHandlingOfPassedCheckedExceptionOnStaticExecution() {
+        Runnable runnable = () -> System.out.println(HELLO);
+        try {
+            onTrueExecute(TRUE, runnable, AbsentInformationException.class);
+            onFalseExecute(FALSE, runnable, AgentLoadException.class);
+        } catch (AbsentInformationException | AgentLoadException exception) {
+            log.error("Exception occurred", exception);
+            fail();
+        }
+    }
+
+    @Test
+    // Only the possibility to compile the statements in the test without handling
+    // the passed exceptions is tested, so the following suppression is valid:
+    @SuppressWarnings("squid:S2699")
+    void mustNotEnforceHandlingOfPassedUncheckedExceptionAndNullsOnStaticExecution() {
+        Runnable runnable = () -> System.out.println(HELLO);
+        onTrueExecute(TRUE, runnable, AnnotationTypeMismatchException.class);
+        onTrueExecute(TRUE, runnable, null);
+        onFalseExecute(FALSE, runnable, ArrayStoreException.class);
+        onFalseExecute(FALSE, runnable, null);
+    }
+
+    @Test
+    void mustHandleNPEWhenSubmittingNullsOnStaticExecution() {
+        assertAll(
+                () -> assertThrows(NullPointerException.class, () -> onTrueExecute(TRUE, null)),
+                () -> assertThrows(NullPointerException.class, () ->
+                        onTrueExecute(TRUE, null, RuntimeException.class)),
+                () -> assertDoesNotThrow(() -> onTrueExecute(FALSE, null, RuntimeException.class)),
+                () -> assertThrows(NullPointerException.class, () -> onFalseExecute(FALSE, null)),
+                () -> assertThrows(NullPointerException.class, () ->
+                        onFalseExecute(FALSE, null, RuntimeException.class)),
+                () -> assertDoesNotThrow(() -> onFalseExecute(TRUE, null, RuntimeException.class))
+        );
+    }
+
+//  <!-- ====================================================================== -->
+//  <!--        GET OPERATIONS                                                  -->
+//  <!-- ====================================================================== -->
 
     @Test
     void mustGet() {
@@ -412,11 +642,11 @@ class ConditionalTest {
     void mustGetNull() {
         // given
         Conditional conditionalTrue = conditional(TRUE)
-                .onTrue(() -> System.out.println(Variables.HELLO))
+                .onTrue(() -> System.out.println(HELLO))
                 .onFalse(() -> FALSE.toString());
         Conditional conditionalFalse = conditional(FALSE)
                 .onTrue(() -> TRUE.toString())
-                .onFalse(() -> System.out.println(Variables.HELLO));
+                .onFalse(() -> System.out.println(HELLO));
 
         // when
         String actualResultOnTrue = conditionalTrue.get(String.class);
@@ -430,7 +660,25 @@ class ConditionalTest {
     }
 
     @Test
-    void mustGetWithMismatchedReturnTypeException() {
+    @SuppressWarnings("DataFlowIssue")
+    void mustThrowNPEWhenPassedTypeIsNullAndWhenGet() {
+        // given
+        Conditional conditionalTrue = conditional(TRUE)
+                .onTrue(() -> System.out.println(HELLO))
+                .onFalse(() -> FALSE.toString());
+        Conditional conditionalFalse = conditional(FALSE)
+                .onTrue(() -> TRUE.toString())
+                .onFalse(() -> System.out.println(HELLO));
+
+        // then
+        assertAll(
+                () -> assertThrows(NullPointerException.class, () -> conditionalTrue.get(null)),
+                () -> assertThrows(NullPointerException.class, () -> conditionalFalse.get(null))
+        );
+    }
+
+    @Test
+    void mustThrowMismatchedReturnTypeExceptionWhenGet() {
         // given
         Conditional conditionalTrue = conditional(TRUE)
                 .onTrue(() -> TRUE.toString())
@@ -447,47 +695,14 @@ class ConditionalTest {
     }
 
     @Test
-    void mustGetWithWrapperException() {
-        // given
-        Exception exceptionToThrow = new Exception();
-        Conditional conditionalTrue = conditional(TRUE)
-                .onTrue(() -> {
-                    throw exceptionToThrow;
-                })
-                .onFalse(() -> FALSE.toString());
-        Conditional conditionalFalse = conditional(FALSE)
-                .onTrue(() -> TRUE.toString())
-                .onFalse(() -> {
-                    throw exceptionToThrow;
-                });
-
-        // then
-        try {
-            conditionalTrue.get(String.class);
-            fail();
-        } catch (WrapperException caughtException) {
-            Throwable exceptionCause = caughtException.getCause();
-            assertEquals(exceptionCause, exceptionToThrow);
-        }
-
-        try {
-            conditionalFalse.get(String.class);
-            fail();
-        } catch (WrapperException caughtException) {
-            Throwable exceptionCause = caughtException.getCause();
-            assertEquals(exceptionCause, exceptionToThrow);
-        }
-    }
-
-    @Test
-    void mustGetWithUndeterminedReturnValueException() {
+    void mustThrowUndeterminedReturnValueExceptionWhenGet() {
         // given
         Conditional conditionalWithTooManyActions = conditional(TRUE)
                 .onTrue(() -> TRUE.toString())
-                .onTrue(() -> System.out.println(Variables.HELLO));
+                .onTrue(() -> System.out.println(HELLO));
         Conditional conditionalWithTooLittleActions = conditional(FALSE)
                 .onTrue(() -> TRUE.toString())
-                .onTrue(() -> System.out.println(Variables.HELLO));
+                .onTrue(() -> System.out.println(HELLO));
         Conditional conditionalWithOneAction = conditional(TRUE)
                 .onTrue(() -> TRUE.toString());
 
@@ -500,6 +715,97 @@ class ConditionalTest {
                 () -> assertDoesNotThrow(() -> conditionalWithOneAction.get(String.class))
         );
     }
+
+    @Test
+    void mustThrowExceptionFromPassedActionWhenGet() {
+        // given
+        RuntimeException uncheckedException = new RuntimeException();
+        Exception checkedException = new Exception();
+        Conditional conditionalTrue = conditional(TRUE)
+                .onTrue(() -> {
+                    throw uncheckedException;
+                })
+                .onFalse(() -> FALSE.toString());
+        Conditional conditionalFalse = conditional(FALSE)
+                .onTrue(() -> TRUE.toString())
+                .onFalse(() -> {
+                    throw checkedException;
+                });
+
+        // then
+        try {
+            conditionalTrue.get(String.class);
+            fail();
+        } catch (RuntimeException caughtException) {
+            assertEquals(uncheckedException, caughtException);
+        }
+
+        try {
+            conditionalFalse.get(String.class);
+            fail();
+        } catch (@SuppressWarnings("OverlyBroadCatchBlock") Exception caughtException) {
+            assertEquals(checkedException, caughtException);
+        }
+    }
+
+    @Test
+    void mustGetWithExceptionsViaGetWithoutExceptions() {
+        // given
+        Conditional conditional = spy(conditional(TRUE));
+        conditional.onTrue(() -> HELLO);
+
+        // when
+        conditional.get(String.class, RuntimeException.class);
+        conditional.get(String.class, RuntimeException.class, RuntimeException.class);
+        conditional.get(String.class, RuntimeException.class, RuntimeException.class, RuntimeException.class);
+        conditional.get(String.class, RuntimeException.class, RuntimeException.class,
+                        RuntimeException.class, RuntimeException.class);
+
+        // then
+        verify(conditional, times(4)).get(String.class);
+    }
+
+    @Test
+    void mustEnforceHandlingOfPassedCheckedExceptionsWhenGet() {
+        Conditional conditional = spy(conditional(TRUE));
+        conditional.onTrue(() -> HELLO);
+        try {
+            conditional.get(String.class, AbsentInformationException.class);
+            conditional.get(String.class, AgentInitializationException.class, AgentLoadException.class);
+            conditional.get(String.class, AlreadyBoundException.class, AttachNotSupportedException.class, AWTException.class);
+            conditional.get(String.class, BackingStoreException.class, BadAttributeValueExpException.class,
+                            BadBinaryOpValueExpException.class, BadLocationException.class);
+        } catch (AbsentInformationException
+                 | AgentInitializationException | AgentLoadException
+                 | AlreadyBoundException | AttachNotSupportedException | AWTException
+                 | BackingStoreException | BadAttributeValueExpException | BadBinaryOpValueExpException |
+                 BadLocationException exception) {
+            log.error("Exception occurred", exception);
+            fail();
+        }
+    }
+
+    @Test
+    // Only the possibility to compile the statements in the test without handling
+    // the passed exceptions is tested, so the following suppression is valid:
+    @SuppressWarnings("squid:S2699")
+    void mustNotEnforceHandlingOfPassedUncheckedExceptionsAndNullsWhenGet() {
+        Conditional conditional = spy(conditional(TRUE));
+        conditional.onTrue(() -> HELLO);
+        conditional.get(String.class, AnnotationTypeMismatchException.class);
+        conditional.get(String.class, null);
+        conditional.get(String.class, ArithmeticException.class, ArrayStoreException.class);
+        conditional.get(String.class, null, null, null);
+        conditional.get(String.class, BufferOverflowException.class, BufferUnderflowException.class, CannotRedoException.class);
+        conditional.get(String.class, null, null, null);
+        conditional.get(String.class, CannotUndoException.class, CatalogException.class,
+                        ClassCastException.class, ClassNotPreparedException.class);
+        conditional.get(String.class, null, null, null, null);
+    }
+
+//  <!-- ====================================================================== -->
+//  <!--        DISCARD OPERATIONS                                              -->
+//  <!-- ====================================================================== -->
 
     @Test
     void mustDiscardAllActions() {
@@ -591,9 +897,8 @@ class ConditionalTest {
         try {
             conditionalTrue.execute();
             fail();
-        } catch (WrapperException exception) {
-            Throwable causeException = exception.getCause();
-            assertEquals(causeException, exceptionForTrue);
+        } catch (ChildRuntimeException caughtException) {
+            assertEquals(exceptionForTrue, caughtException);
         }
         assertDoesNotThrow(() -> conditionalFalse.execute());
     }
@@ -602,16 +907,15 @@ class ConditionalTest {
     @MethodSource("generateTrueAndFalseConditionals")
     void mustThrowOnFalse(Conditional conditionalTrue, Conditional conditionalFalse) {
         ChildRuntimeException exceptionForTrue = new ChildRuntimeException(EXCEPTION_TEST_MESSAGE);
-        ChildException exceptionForFalse = new ChildException(EXCEPTION_TEST_MESSAGE);
+        ArithmeticException exceptionForFalse = new ArithmeticException(EXCEPTION_TEST_MESSAGE);
         conditionalTrue.onFalseThrow(exceptionForTrue);
         conditionalFalse.onFalseThrow(exceptionForFalse);
 
         try {
             conditionalFalse.execute();
             fail();
-        } catch (WrapperException exception) {
-            Throwable causeException = exception.getCause();
-            assertEquals(causeException, exceptionForFalse);
+        } catch (ArithmeticException caughtException) {
+            assertEquals(exceptionForFalse, caughtException);
         }
         assertDoesNotThrow(() -> conditionalTrue.execute());
     }
@@ -664,6 +968,30 @@ class ConditionalTest {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    void mustThrowNPEWhenNullAsExceptionPassed() {
+        Conditional conditionalTrueWithException = conditional(TRUE)
+                .onTrueThrow(null);
+        Conditional conditionalTrueWithoutException = conditional(TRUE)
+                .onFalseThrow(null);
+        Conditional conditionalFalseWithException = conditional(FALSE)
+                .onFalseThrow(null);
+        Conditional conditionalFalseWithoutException = conditional(FALSE)
+                .onTrueThrow(null);
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class, conditionalTrueWithException::execute),
+                () -> assertDoesNotThrow(() -> conditionalTrueWithoutException.execute()),
+                () -> assertThrows(NullPointerException.class, conditionalFalseWithException::execute),
+                () -> assertDoesNotThrow(() -> conditionalFalseWithoutException.execute()),
+                () -> assertThrows(NullPointerException.class, () -> isTrueOrThrow(FALSE, null)),
+                () -> assertDoesNotThrow(() -> isTrueOrThrow(TRUE, null)),
+                () -> assertThrows(NullPointerException.class, () -> isFalseOrThrow(TRUE, null)),
+                () -> assertDoesNotThrow(() -> isFalseOrThrow(FALSE, null))
+        );
+    }
+
 //  <!-- ====================================================================== -->
 //  <!--        UTILS                                                           -->
 //  <!-- ====================================================================== -->
@@ -699,18 +1027,18 @@ class ConditionalTest {
     static List<Callable<?>> generateThreeCallable() {
         return IntStream.rangeClosed(1, 3)
                 .boxed()
-                .map(num -> (Callable<String>) () -> Variables.HELLO)
+                .map(num -> (Callable<String>) () -> HELLO)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     static List<Runnable> generateThreeRunnable() {
         return IntStream.rangeClosed(1, 3)
                 .boxed()
-                .map(num -> (Runnable) () -> System.out.println(Variables.HELLO))
+                .map(num -> (Runnable) () -> System.out.println(HELLO))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    ActionsList extractActions(Conditional conditional, boolean actionsCategory) {
+    ActionsList extractActionsViaReflection(Conditional conditional, boolean actionsCategory) {
         Map<Boolean, ActionsList> actionsMap = extractUnaryInternalActionsMap(conditional);
         return actionsMap.get(actionsCategory);
     }

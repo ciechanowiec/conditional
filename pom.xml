@@ -6,7 +6,7 @@
 
   <groupId>eu.ciechanowiec</groupId>
   <artifactId>conditional</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <packaging>jar</packaging>
 
   <name>Conditional</name>
@@ -32,7 +32,7 @@
   <developers>
     <developer>
       <name>${project.developer.name}</name>
-      <email>herman@ciechanowiec.eu</email>
+      <email>${project.developer.email}</email>
     </developer>
   </developers>
 
@@ -55,18 +55,21 @@
   <properties>
     <!-- Common -->
     <project.developer.name>Herman Ciechanowiec</project.developer.name>
+    <project.developer.email>herman@ciechanowiec.eu</project.developer.email>
     <!-- Building properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>11</maven.compiler.release>
+    <max.jdk.version>11.9</max.jdk.version>
     <!-- Dependencies -->
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <lombok.version>1.18.24</lombok.version>
+    <jsr305.version>3.0.2</jsr305.version>
     <junit-jupiter-api.version>5.9.1</junit-jupiter-api.version>
     <junit-jupiter-params.version>5.9.1</junit-jupiter-params.version>
-    <mockito-core.version>4.8.1</mockito-core.version>
-    <mockito-junit-jupiter.version>4.8.1</mockito-junit-jupiter.version>
-    <mockito-inline.version>4.8.1</mockito-inline.version>
-    <slf4j-api.version>2.0.3</slf4j-api.version>
+    <mockito-core.version>4.10.0</mockito-core.version>
+    <mockito-junit-jupiter.version>4.10.0</mockito-junit-jupiter.version>
+    <mockito-inline.version>4.10.0</mockito-inline.version>
+    <slf4j-api.version>2.0.6</slf4j-api.version>
     <slf4j-tinylog.version>2.5.0</slf4j-tinylog.version>
     <tinylog-api.version>2.5.0</tinylog-api.version>
     <tinylog-impl.version>2.5.0</tinylog-impl.version>
@@ -90,6 +93,7 @@
     <jacoco-maven-plugin.coverage.minimum>1</jacoco-maven-plugin.coverage.minimum>
     <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
     <javadoc.destination.directory>${project.basedir}/docs</javadoc.destination.directory>
+    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
     <!-- Release plugins -->
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
@@ -108,6 +112,15 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <!--  Mainly for @Nullable and @Nonnull annotations.
+            Google groupId is used, because the native groupId isn't
+            available at repo.maven.apache.org/maven2 -->
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- Testing -->
@@ -188,7 +201,8 @@
     </resources>
 
     <pluginManagement>
-      <!-- Lock down plugins versions to avoid using Maven defaults from super-pom -->
+      <!-- Lock down plugins versions to avoid using Maven
+           defaults from the default Maven super-pom -->
       <plugins>
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
@@ -237,15 +251,6 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}</directory>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.adoc</include>
-                  </includes>
-                </resource>
-              </resources>
             </configuration>
           </execution>
           <execution>
@@ -256,18 +261,23 @@
             </goals>
             <configuration>
               <outputDirectory>${javadoc.destination.directory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}</directory>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.adoc</include>
-                  </includes>
-                </resource>
-              </resources>
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <resources>
+            <resource>
+              <directory>${project.basedir}</directory>
+              <includes>
+                <include>LICENSE.txt</include>
+                <include>README.adoc</include>
+              </includes>
+              <!-- To enable variables in the resources files
+                   (https://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html): -->
+              <filtering>true</filtering>
+            </resource>
+          </resources>
+        </configuration>
       </plugin>
       <!-- Creates an uber-jar binary file with all
            dependencies and resources inside -->
@@ -295,8 +305,8 @@
                     <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                     <Bundle-Vendor>${project.developer.name}</Bundle-Vendor>
                     <Bundle-Version>${project.version}</Bundle-Version>
-                    <Export-Package>eu.ciechanowiec.conditional;version="${project.version}"</Export-Package>
-                    <Require-Capability>osgi.ee;filter:="(&amp;(osgi.ee=JavaSE)(version=11))"</Require-Capability>
+                    <Export-Package>${project.groupId}.${project.artifactId};version="${project.version}"</Export-Package>
+                    <Require-Capability>osgi.ee;filter:="(&amp;(osgi.ee=JavaSE)(version=${maven.compiler.release}))"</Require-Capability>
                   </manifestEntries>
                 </transformer>
               </transformers>
@@ -344,7 +354,7 @@
         <version>${maven-enforcer-plugin.version}</version>
         <executions>
           <execution>
-            <id>enforce-maven</id>
+            <id>enforce-maven-version</id>
             <goals>
               <goal>enforce</goal>
             </goals>
@@ -353,6 +363,20 @@
                 <requireMavenVersion>
                   <version>[${min.maven.version},)</version>
                 </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce-jdk-version</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>[${maven.compiler.release}, ${max.jdk.version}]</version>
+                  <message>The project requires JDK of ${maven.compiler.release} - ${max.jdk.version} version due to javadoc plugin bug</message>
+                </requireJavaVersion>
               </rules>
             </configuration>
           </execution>
@@ -448,6 +472,7 @@
         </executions>
         <configuration>
           <show>package</show>
+          <failOnError>false</failOnError>
           <excludePackageNames>eu.ciechanowiec.test</excludePackageNames>
           <!-- The line below fixes a bug with search present probably only until JDK 13
                (https://stackoverflow.com/questions/52326318/maven-javadoc-search-redirects-to-undefined-url) -->
@@ -458,7 +483,7 @@
             &nbsp&nbsp <i>${project.name},</i> v${project.version}
             </p>
             <p>
-            &nbsp&nbsp Copyright © ${project.inceptionYear} ${project.developer.name}
+            &nbsp&nbsp Copyright © ${project.inceptionYear}-${current.year} ${project.developer.name}
             </p>
             <p>
             &nbsp&nbsp <a href="${project.url}">${project.url}</a>
@@ -466,6 +491,25 @@
             ]]>
           </bottom>
         </configuration>
+      </plugin>
+      <!-- Gives timestamp build propery  -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>timestamp-property</id>
+            <goals>
+              <goal>timestamp-property</goal>
+            </goals>
+            <configuration>
+              <name>current.year</name>
+              <pattern>yyyy</pattern>
+              <locale>GB</locale>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
