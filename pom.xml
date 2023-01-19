@@ -296,7 +296,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <!-- Creates OSGi bundle -->
+                    <!-- Creates an OSGi bundle -->
                     <Bundle-Category>utilities</Bundle-Category>
                     <Bundle-Description>${project.description}</Bundle-Description>
                     <Bundle-DocURL>${project.url}</Bundle-DocURL>
