@@ -11,6 +11,9 @@
 :toc: left
 :toclevels: 5
 :icons: font
+:linkcss:
+:stylesdir: https://www.ciechanowiec.eu/linux_mantra/
+:stylesheet: adoc-css-style.css
 
 == Overview
 _Conditional_ is a Java utility-library that replaces `if-else` statements and ternary operators with a featured fluent interface. Significantly, this is achieved without use of any `if-else` statement or ternary operator. The library is extremely lightweight (~20 KB), doesn't have any dependencies and is published in Maven Central Repository.
