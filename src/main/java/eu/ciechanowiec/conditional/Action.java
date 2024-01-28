@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
  * </ol>
  * @param <T> type of value returned in the result of action execution
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "JavadocDeclaration"})
 public class Action<T> {
 
     /**

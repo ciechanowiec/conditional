@@ -6,11 +6,11 @@
 
   <groupId>eu.ciechanowiec</groupId>
   <artifactId>conditional</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <packaging>jar</packaging>
 
   <name>Conditional</name>
-  <description>Java utility-library that replaces `if-else` statements and ternary operators with a featured fluent interface</description>
+  <description>Java utility-library designed to replace `if-else` statements and ternary operators with a featured fluent interface</description>
   <url>https://github.com/ciechanowiec/conditional</url>
   <inceptionYear>2022</inceptionYear>
 
@@ -62,41 +62,41 @@
     <max.jdk.version>11.9</max.jdk.version>
     <!-- Dependencies -->
     <commons-lang3.version>3.12.0</commons-lang3.version>
-    <lombok.version>1.18.24</lombok.version>
+    <lombok.version>1.18.30</lombok.version>
     <jsr305.version>3.0.2</jsr305.version>
-    <junit-jupiter-api.version>5.9.1</junit-jupiter-api.version>
-    <junit-jupiter-params.version>5.9.1</junit-jupiter-params.version>
-    <mockito-core.version>4.10.0</mockito-core.version>
-    <mockito-junit-jupiter.version>4.10.0</mockito-junit-jupiter.version>
-    <mockito-inline.version>4.10.0</mockito-inline.version>
-    <slf4j-api.version>2.0.6</slf4j-api.version>
-    <slf4j-tinylog.version>2.5.0</slf4j-tinylog.version>
-    <tinylog-api.version>2.5.0</tinylog-api.version>
-    <tinylog-impl.version>2.5.0</tinylog-impl.version>
+    <junit-jupiter-api.version>5.10.1</junit-jupiter-api.version>
+    <junit-jupiter-params.version>5.10.1</junit-jupiter-params.version>
+    <mockito-core.version>5.10.0</mockito-core.version>
+    <mockito-junit-jupiter.version>5.10.0</mockito-junit-jupiter.version>
+    <mockito-inline.version>5.2.0</mockito-inline.version>
+    <slf4j-api.version>2.0.11</slf4j-api.version>
+    <slf4j-tinylog.version>2.6.2</slf4j-tinylog.version>
+    <tinylog-api.version>2.6.2</tinylog-api.version>
+    <tinylog-impl.version>2.6.2</tinylog-impl.version>
     <!-- Locking down Maven default plugins -->
-    <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
-    <maven-deploy-plugin.version>3.0.0</maven-deploy-plugin.version>
-    <maven-install-plugin.version>3.0.1</maven-install-plugin.version>
+    <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
+    <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+    <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
     <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-    <maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
     <!-- Basic plugins -->
-    <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-    <maven-shade-plugin.version>3.4.0</maven-shade-plugin.version>
-    <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
-    <maven-failsafe-plugin.version>3.0.0-M7</maven-failsafe-plugin.version>
-    <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
+    <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
+    <maven-shade-plugin.version>3.5.0</maven-shade-plugin.version>
+    <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
+    <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
+    <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <min.maven.version>3.8.6</min.maven.version>
-    <versions-maven-plugin.version>2.12.0</versions-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+    <versions-maven-plugin.version>2.16.2</versions-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     <jacoco-maven-plugin.coverage.minimum>1</jacoco-maven-plugin.coverage.minimum>
-    <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
     <javadoc.destination.directory>${project.basedir}/docs</javadoc.destination.directory>
-    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
+    <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
     <!-- Release plugins -->
-    <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-    <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+    <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+    <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
   </properties>
 
@@ -534,13 +534,13 @@
             &nbsp&nbsp Copyright © ${project.inceptionYear}-${current.year} ${project.developer.name}
             </p>
             <p>
-            &nbsp&nbsp <a href="${project.url}">${project.url}</a>
+            &nbsp&nbsp <a href="${project.url}" target="_blank">${project.url}</a>
             </p>
             ]]>
           </bottom>
         </configuration>
       </plugin>
-      <!-- Gives timestamp build propery  -->
+      <!-- Gives timestamp build property  -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>

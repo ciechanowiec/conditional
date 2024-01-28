@@ -1,26 +1,26 @@
 -classpath
-'/home/herman_ciechanowiec/.m2/repository/org/projectlombok/lombok/1.18.24/lombok-1.18.24.jar:/home/herman_ciechanowiec/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar'
+'/home/herman/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar:/home/herman/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar'
 -encoding
 'UTF-8'
 -package
 --release
 11
 -sourcepath
-'/home/herman_ciechanowiec/0_prog/conditional/src/main/java:/home/herman_ciechanowiec/0_prog/conditional/target/generated-sources/annotations'
+'/home/herman/0_prog/conditional/src/main/java:/home/herman/0_prog/conditional/target/generated-sources/annotations'
 -author
 -bottom
-'<p>             &nbsp&nbsp <i>Conditional,</i> v1.0.4             </p>             <p>             &nbsp&nbsp Copyright © 2022-2022 Herman Ciechanowiec             </p>             <p>             &nbsp&nbsp <a href="https://github.com/ciechanowiec/conditional">https://github.com/ciechanowiec/conditional</a>             </p>'
+'<p>             &nbsp&nbsp <i>Conditional,</i> v1.0.5             </p>             <p>             &nbsp&nbsp Copyright © 2022-2024 Herman Ciechanowiec             </p>             <p>             &nbsp&nbsp <a href="https://github.com/ciechanowiec/conditional" target="_blank">https://github.com/ciechanowiec/conditional</a>             </p>'
 -charset
 'UTF-8'
 -d
-'/home/herman_ciechanowiec/0_prog/conditional/docs'
+'/home/herman/0_prog/conditional/docs'
 -docencoding
 'UTF-8'
 -doctitle
-'Conditional 1.0.4 API'
+'Conditional 1.0.5 API'
 -linkoffline
-'https://docs.oracle.com/en/java/javase/11/docs/api' '/home/herman_ciechanowiec/0_prog/conditional/target/javadoc-bundle-options'
+'https://docs.oracle.com/en/java/javase/11/docs/api' '/home/herman/0_prog/conditional/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'Conditional 1.0.4 API'
+'Conditional 1.0.5 API'
