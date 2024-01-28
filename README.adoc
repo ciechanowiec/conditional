@@ -19,7 +19,9 @@
 :stylesheet: adoc-css-style.css
 
 == Overview
-_Conditional_ is a Java utility-library that replaces `if-else` statements and ternary operators with a featured fluent interface. Significantly, this is achieved without use of any `if-else` statement or ternary operator. The library is extremely lightweight (~20 KB), doesn't have any dependencies and is published in Maven Central Repository.
+_Conditional_ is a Java utility-library designed to replace `if-else` statements and ternary operators with a featured fluent interface. The library directs developers towards expressing boolean conditional logic in a linear format, fostering clear and streamlined execution flows. By markedly reducing the cognitive complexity typically caused by `if-else` structures, _Conditional_ makes the codebase more readable, simplifying testing and debugging processes.
+
+Significantly, the library doesn't make use of any `if-else` statement or ternary operator inside.
 
 == Quick Start
 === Basic Concepts
@@ -31,14 +33,14 @@ _Conditional_ is a Java utility-library that replaces `if-else` statements and t
 . `Conditional` is lazy, which means that respective submitted actions will be triggered when and only when an `execute(...)` or `get(...)` methods are called, hence mere submission of an action doesn't suffice to trigger that action.
 
 === Maven Dependency
-To use _Conditional_ library, the following Maven dependency can be added to a project:
+_Conditional_ library is extremely lightweight (~20 KB). To use it, the following Maven dependency can be added to a project:
 
 [source, xml]
 ----
 <dependency>
   <groupId>eu.ciechanowiec</groupId>
   <artifactId>conditional</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
 </dependency>
 ----
 
@@ -123,59 +125,29 @@ private static String evenOrOdd(int numToCheck) {
 }
 ----
 
-=== The Idea behind _Conditional_
-The idea behind _Conditional_ library is to enhance object-oriented style of Java code and to make it less similar to C code.
+== The Idea behind _Conditional_
 
-For instance, here are two snippets how iteration is usually performed in C and Java. As can be seen in those examples, style difference between those snippets is marginal.
+=== Cognitive Complexity of `if-else` Statements
+`if-else` statements are fundamental in controlling the flow of logic in programming. They dictate the execution path based on conditional evaluations. However, the extensive use of `if-else` statements, especially in complex methods or processes, significantly increases cognitive complexity. This complexity arises because each `if-else` block represents a decision point, and when numerous such blocks are present, programmers must keep track of multiple potential execution paths and outcomes. This requirement to constantly map and predict the flow of logic can become mentally taxing, reducing the overall readability and understandability of the code.
 
-.Common iteration in C:
-[source, c]
-----
-#include <stdio.h>
-int main() {
-    for (int i = 0; i < 5; ++i)
-    {
-        if (i % 2 == 0)
-        {
-            printf("Number %d is even\n", i);
-        }
-        else
-        {
-            printf("Number %d is odd\n", i);
-        }
-    }
-    return 0;
-}
-----
+=== Amplified Complexity in Nested Statements
+The cognitive complexity escalates dramatically when `if-else` statements are nested. Nested structures require developers to understand not just the individual conditions, but also how these conditions interact with and depend on each other. Each level of nesting adds another layer of complexity, making it more challenging to trace the logic and predict the behavior of the code. This complexity is not merely linear; it compounds with each additional layer, leading to a situation where understanding the full scope of the logic requires deep and often exhaustive analysis.
 
-.Common iteration in Java:
-[source, java]
-----
-public static void main(String[] args) {
-    for (int i = 0; i < 5; i++) {
-        if (i % 2 == 0) {
-            System.out.printf("Number %d is even\n", i);
-        } else {
-            System.out.printf("Number %d is odd\n", i);
-        }
-    }
-}
-----
+=== Maintenance Challenges Leading to Further Complexity
+Over time, as software evolves, `if-else` blocks often undergo modifications and extensions. During maintenance, new conditions are frequently added to existing structures, sometimes in a haphazard or unplanned manner. This can lead to even more convoluted and chaotic logic, further increasing the cognitive complexity. Developers working on such code must not only grapple with the existing complex conditions but also with the intricacies introduced by ongoing changes. This often results in a codebase that is difficult to debug, test, and extend, as each addition or alteration has the potential to affect the logic flow in unpredictable ways.
 
-_Conditional_ library, in turn, forces to resign from C-style code in many aspects and pushes via various means towards more object-oriented style. For example, _Conditional_ library doesn't allow to pass non-final either non-effectively final variables as function arguments, which makes it impossible to iterate in a way like in the snippets above. As a result, with _Conditional_ library those snippets will have to be rewritten in the manner presented below.
+=== `if-else` Overuse Example
 
-.Iteration with Conditional in Java:
-[source, java]
-----
-public static void main(String[] args) {
-    IntStream.range(0, 5)
-             .forEach(index ->
-                      conditional(index % 2 == 0)
-                            .onTrue(() -> System.out.printf("Number %d is even\n", index))
-                            .onFalse(() -> System.out.printf("Number %d is odd\n", index))
-                            .execute());
-}
-----
+A prime example of the impact of excessive `if-else` usage can be seen in the `updateField(...)` method of the `org.apache.felix.scr.impl.inject.field.FieldHandler` class within the Apache Felix framework (https://github.com/apache/felix-dev/blob/org.apache.felix.http.jetty-5.1.8/scr/src/main/java/org/apache/felix/scr/impl/inject/field/FieldHandler.java#L184-L319[link]). This method is composed of 24 `if-else` statements, which are spread across 125 lines and include up to four levels of nested `if-else` blocks. The intricate nesting results in 20 different behavioral permutations based solely on the `if-else` logic. This means there are 20 distinct paths the execution flow might take within just this single method. The sheer volume and complexity of these conditional statements significantly elevate the cognitive load, rendering the method challenging to comprehend, debug, and test effectively. This case illustrates how deep nesting and overuse of `if-else` statements can lead to a substantial increase in cognitive complexity, adversely affecting the clarity and maintainability of the code.
+
+=== Solution: _Conditional_
+
+As it was explained above, the extensive and nested use of `if-else` statements, particularly when chaotically extended, leads to increased cognitive complexity, making the code harder to understand, maintain, and evolve. Therefore, the overuse of `if-else` structures, despite their necessity, can be counterproductive in complex programming scenarios.
+
+_Conditional_ offers a structured approach to managing conditional logic, addressing the inherent cognitive complexity of `if-else` statements. It provides a fluent interface that guides developers towards expressing conditional logic in a linear, more intuitive format. This approach effectively streamlines the `if-else` logic, making it more transparent and reducing the cognitive load associated with understanding and maintaining traditional conditional structures.
+
+By simplifying the representation of conditional logic, _Conditional_ helps in maintaining a cleaner and more organized codebase. It encourages writing concise and clear conditions, minimizing the chances of unwieldy and complex code patterns that often arise with standard `if-else` statements. This approach not only enhances the readability of the code but also eases the process of debugging and testing, leading to more maintainable software solutions.
+
 
 == Further Usage Examples
 [upperalpha]
@@ -358,16 +330,17 @@ public static void main(String[] args) {
 <4> This basic get method will not enforce exception handling, although it throws an `IOException`, which is a subclass of an `Exception`.
 <5> This overloaded get method will enforce exception handling. Handling of `IOException` will be enforced in this case, because it was passed as a parameter to the execution method.
 
-== API Documentation
+== Miscellaneous
+=== API Documentation
 Full API documentation of _Conditional_ library can be found at this link: https://www.ciechanowiec.eu/conditional. The most important part is the API description of `Conditional` class itself: https://www.ciechanowiec.eu/conditional/eu/ciechanowiec/conditional/Conditional.html.
 
-== OSGi
+=== OSGi
 _Conditional_ library is built as an OSGi bundle, therefore it can be used in OSGi environment. Among others, it can be used within Adobe Experience Manager (AEM).
 
-== License
+=== License
 The program is subject to MIT No Attribution License
 
-Copyright © 2022-2022 Herman Ciechanowiec
+Copyright © 2022-2024 Herman Ciechanowiec
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
 
